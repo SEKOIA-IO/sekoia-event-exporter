@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/sekoia-io/sekoia-event-exporter#readme
+    about: Check the README for usage instructions and configuration
+  - name: Sekoia.io Regions
+    url: https://docs.sekoia.io/getting_started/regions/
+    about: View available Sekoia.io regions and API endpoints
