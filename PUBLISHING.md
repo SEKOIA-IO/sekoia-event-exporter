@@ -29,7 +29,12 @@ This guide explains how to publish the `sekoia-event-exporter` package to PyPI.
    version = "0.1.0"  # Update this
    ```
 
-2. **Update CHANGELOG** (if you have one) with release notes
+2. **Update CHANGELOG.md** with release notes:
+   - Move items from `[Unreleased]` to a new version section
+   - Add the release date
+   - Create a new empty `[Unreleased]` section
+   - Follow the [Keep a Changelog](https://keepachangelog.com/) format
+   - Document all Added, Changed, Deprecated, Removed, Fixed, and Security items
 
 3. **Ensure all tests pass**:
    ```bash
@@ -206,7 +211,8 @@ Before publishing to PyPI:
 
 - [ ] All tests pass
 - [ ] Code is formatted and linted
-- [ ] Version number is updated
+- [ ] Version number is updated in pyproject.toml
+- [ ] CHANGELOG.md is updated with release notes
 - [ ] Git tag created
 - [ ] Tested on TestPyPI
 - [ ] README is up to date

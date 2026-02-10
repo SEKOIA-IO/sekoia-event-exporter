@@ -173,6 +173,13 @@ git checkout -b feature/your-feature-name
    - Write clean, well-documented code
    - Add or update tests as needed
    - Update documentation if you're changing functionality
+   - Add an entry to `CHANGELOG.md` under the `[Unreleased]` section:
+     - **Added**: for new features
+     - **Changed**: for changes in existing functionality
+     - **Deprecated**: for soon-to-be removed features
+     - **Removed**: for now removed features
+     - **Fixed**: for any bug fixes
+     - **Security**: for vulnerability fixes
 
 3. **Test your changes**
 

@@ -323,9 +323,4 @@ Contributions are welcome! Please follow these steps:
 
 ## Changelog
 
-### 0.1.0 (Initial Release)
-
-- Initial implementation of export and status commands
-- Real-time progress monitoring with ETA
-- Comprehensive error handling
-- Modern Python package structure
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes to this project.
