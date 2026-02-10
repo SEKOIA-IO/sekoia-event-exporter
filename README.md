@@ -75,8 +75,8 @@ API_HOST=api.us.sekoia.io
 **Option 2: Command-Line Argument**
 
 ```bash
-sekoia-export export <job_uuid> --api-host api.us.sekoia.io
-sekoia-export status <task_uuid> --api-host api.us.sekoia.io
+sekoia-event-export export <job_uuid> --api-host api.us.sekoia.io
+sekoia-event-export status <task_uuid> --api-host api.us.sekoia.io
 ```
 
 **Option 3: Default**
@@ -92,19 +92,19 @@ For the complete list of available regions and their API endpoints, see the [Sek
 Trigger an export for a specific search job and monitor its progress:
 
 ```bash
-sekoia-export export <job_uuid>
+sekoia-event-export export <job_uuid>
 ```
 
 Example:
 
 ```bash
-sekoia-export export 550e8400-e29b-41d4-a716-446655440000
+sekoia-event-export export 550e8400-e29b-41d4-a716-446655440000
 ```
 
 With custom polling interval and timeout:
 
 ```bash
-sekoia-export export <job_uuid> --interval 5 --max-wait 3600
+sekoia-event-export export <job_uuid> --interval 5 --max-wait 3600
 ```
 
 ### Check Export Status
@@ -112,13 +112,13 @@ sekoia-export export <job_uuid> --interval 5 --max-wait 3600
 Check the status of an already-triggered export task:
 
 ```bash
-sekoia-export status <task_uuid>
+sekoia-event-export status <task_uuid>
 ```
 
 Example:
 
 ```bash
-sekoia-export status 660e8400-e29b-41d4-a716-446655440001
+sekoia-event-export status 660e8400-e29b-41d4-a716-446655440001
 ```
 
 ### Command Options

@@ -3,8 +3,8 @@ Sekoia.io Export Script
 
 This script exports search job results from Sekoia.io API.
 Usage:
-  sekoia-export export <job_uuid>
-  sekoia-export status <task_uuid>
+  sekoia-event-export export <job_uuid>
+  sekoia-event-export status <task_uuid>
 
 Environment:
   API_KEY: Sekoia API token
@@ -217,7 +217,7 @@ def main() -> None:
     """Main entry point for the CLI."""
     parser = argparse.ArgumentParser(
         description="Sekoia.io Event Exporter - Export search job results",
-        prog="sekoia-export"
+        prog="sekoia-event-export"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

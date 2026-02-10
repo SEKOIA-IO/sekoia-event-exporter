@@ -43,7 +43,7 @@ dev = [
 ]
 
 [project.scripts]
-sekoia-export = "sekoia_event_exporter:main"
+sekoia-event-export = "sekoia_event_exporter:main"
 
 [project.urls]
 Homepage = "https://github.com/sekoia-io/sekoia-event-exporter"
