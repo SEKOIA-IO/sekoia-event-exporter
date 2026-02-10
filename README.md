@@ -16,27 +16,57 @@ A Python CLI tool to export search job results from the Sekoia.io API.
 
 ## Installation
 
-### From Source
+### Prerequisites
+
+This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable dependency management. Install uv first:
+
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or with pip
+pip install uv
+```
+
+### From Source (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/sekoia-io/sekoia-event-exporter.git
 cd sekoia-event-exporter
 
-# Install the package
-pip install .
+# Install the package with uv
+uv sync
 ```
 
 ### For Development
 
 ```bash
-# Install in editable mode with development dependencies
+# Install with all development dependencies
+uv sync --all-extras
+
+# Run commands with uv
+uv run sekoia-event-export --help
+```
+
+### Alternative: Using pip
+
+```bash
+# Install from source
+pip install .
+
+# Or in editable mode with development dependencies
 pip install -e ".[dev]"
 ```
 
 ### From PyPI (once published)
 
 ```bash
+uv pip install sekoia-event-exporter
+# or with pip
 pip install sekoia-event-exporter
 ```
 
@@ -169,26 +199,42 @@ Exit codes:
 ### Running Tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 With coverage:
 
 ```bash
-pytest --cov=sekoia_event_exporter --cov-report=html
+uv run pytest --cov=sekoia_event_exporter --cov-report=html
 ```
 
 ### Code Formatting
 
 ```bash
 # Format code with black
-black src/ tests/
+uv run black src/ tests/
+
+# Check formatting without changes
+uv run black --check src/ tests/
 
 # Lint with ruff
-ruff check src/ tests/
+uv run ruff check src/ tests/
+
+# Fix auto-fixable issues
+uv run ruff check --fix src/ tests/
 
 # Type check with mypy
-mypy src/
+uv run mypy src/
+```
+
+### Running All Quality Checks
+
+```bash
+# Run all checks at once
+uv run black --check src/ tests/ && \
+uv run ruff check src/ tests/ && \
+uv run mypy src/ && \
+uv run pytest
 ```
 
 ### Project Structure

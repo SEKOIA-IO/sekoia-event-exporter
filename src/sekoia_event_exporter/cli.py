@@ -11,10 +11,10 @@ Environment:
   API_HOST: Sekoia API host (optional, defaults to api.sekoia.io)
 """
 
+import argparse
 import os
 import sys
 import time
-import argparse
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -27,6 +27,7 @@ DEFAULT_TIMEOUT = (5, 30)  # (connect, read)
 
 class ConfigError(RuntimeError):
     """Configuration error exception."""
+
     pass
 
 
@@ -67,12 +68,7 @@ def create_http_session() -> requests.Session:
     return session
 
 
-def trigger_export(
-    job_uuid: str,
-    session: requests.Session,
-    api_host: str,
-    timeout=DEFAULT_TIMEOUT
-) -> str:
+def trigger_export(job_uuid: str, session: requests.Session, api_host: str, timeout=DEFAULT_TIMEOUT) -> str:
     """Trigger an export job for the given search job UUID.
 
     Args:
@@ -99,12 +95,7 @@ def trigger_export(
     return task_uuid
 
 
-def fetch_task(
-    task_uuid: str,
-    session: requests.Session,
-    api_host: str,
-    timeout=DEFAULT_TIMEOUT
-) -> dict:
+def fetch_task(task_uuid: str, session: requests.Session, api_host: str, timeout=DEFAULT_TIMEOUT) -> dict:
     """Fetch the current status of an export task.
 
     Args:
@@ -216,8 +207,7 @@ def cmd_status(args) -> None:
 def main() -> None:
     """Main entry point for the CLI."""
     parser = argparse.ArgumentParser(
-        description="Sekoia.io Event Exporter - Export search job results",
-        prog="sekoia-event-export"
+        description="Sekoia.io Event Exporter - Export search job results", prog="sekoia-event-export"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

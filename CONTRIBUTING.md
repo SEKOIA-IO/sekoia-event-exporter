@@ -7,8 +7,21 @@ Thank you for your interest in contributing to this project! This document provi
 ### Prerequisites
 
 - Python 3.8 or higher
-- pip
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - git
+
+### Install uv
+
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or with pip
+pip install uv
+```
 
 ### Setting Up Your Development Environment
 
@@ -19,20 +32,25 @@ git clone https://github.com/YOUR_USERNAME/sekoia-event-exporter.git
 cd sekoia-event-exporter
 ```
 
-2. **Create a virtual environment**
+2. **Install dependencies with uv (recommended)**
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install all dependencies including dev extras
+uv sync --all-extras
 ```
 
-3. **Install the package in editable mode with development dependencies**
+**Alternative: Using pip and venv**
 
 ```bash
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 ```
 
-4. **Set up your API key for testing**
+3. **Set up your API key for testing**
 
 ```bash
 cp examples/.env.example .env
@@ -43,38 +61,57 @@ cp examples/.env.example .env
 
 ### Running Tests
 
+Using uv (recommended):
+
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage report
-pytest --cov=sekoia_event_exporter --cov-report=html
+uv run pytest --cov=sekoia_event_exporter --cov-report=html
 
 # Run specific test file
-pytest tests/test_cli.py
+uv run pytest tests/test_cli.py
 
 # Run with verbose output
-pytest -v
+uv run pytest -v
+```
+
+Without uv (if using pip/venv):
+
+```bash
+pytest
+pytest --cov=sekoia_event_exporter --cov-report=html
 ```
 
 ### Code Quality
 
 We use several tools to maintain code quality:
 
+Using uv (recommended):
+
 ```bash
 # Format code with black
-black src/ tests/
+uv run black src/ tests/
 
 # Check formatting without making changes
-black --check src/ tests/
+uv run black --check src/ tests/
 
 # Lint with ruff
-ruff check src/ tests/
+uv run ruff check src/ tests/
 
 # Fix auto-fixable issues
-ruff check --fix src/ tests/
+uv run ruff check --fix src/ tests/
 
 # Type check with mypy
+uv run mypy src/
+```
+
+Without uv:
+
+```bash
+black src/ tests/
+ruff check src/ tests/
 mypy src/
 ```
 
@@ -82,8 +119,19 @@ mypy src/
 
 Make sure to run all quality checks:
 
+Using uv:
+
 ```bash
 # Run all checks at once
+uv run black --check src/ tests/ && \
+uv run ruff check src/ tests/ && \
+uv run mypy src/ && \
+uv run pytest
+```
+
+Without uv:
+
+```bash
 black src/ tests/ && ruff check src/ tests/ && mypy src/ && pytest
 ```
 
@@ -127,6 +175,17 @@ git checkout -b feature/your-feature-name
    - Update documentation if you're changing functionality
 
 3. **Test your changes**
+
+With uv:
+
+```bash
+uv run pytest
+uv run black src/ tests/
+uv run ruff check src/ tests/
+uv run mypy src/
+```
+
+Without uv:
 
 ```bash
 pytest
