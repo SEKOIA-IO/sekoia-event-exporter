@@ -1,0 +1,64 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: 'Publish to TestPyPI instead of PyPI'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for trusted publishing
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: uv sync --all-extras
+
+    - name: Run tests
+      run: |
+        uv run pytest --cov=sekoia_event_exporter
+        uv run black --check src/ tests/
+        uv run ruff check src/ tests/
+        uv run mypy src/
+
+    - name: Build package
+      run: uv build
+
+    - name: Publish to TestPyPI
+      if: github.event.inputs.test_pypi == 'true'
+      run: |
+        uv publish --publish-url https://test.pypi.org/legacy/
+      env:
+        UV_PUBLISH_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+
+    - name: Publish to PyPI
+      if: github.event.inputs.test_pypi != 'true'
+      run: |
+        uv publish
+      env:
+        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+    - name: Create GitHub Release Assets
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
+      with:
+        files: dist/*
