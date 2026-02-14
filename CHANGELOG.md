@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.2.0] - 2026-02-14
+
+### Changed
+- Migrated PyPI publishing workflow to use official PyPA `pypi-publish` action
+- Enabled trusted publishing via OIDC for enhanced security (no API tokens required)
+- Improved GitHub Actions workflow for more reliable package publishing
+
 ## [0.1.0] - 2026-02-10
 
 ### Added
@@ -68,5 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sekoia-io/sekoia-event-exporter/releases/tag/v0.1.0

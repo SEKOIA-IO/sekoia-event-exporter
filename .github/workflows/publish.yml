@@ -3,13 +3,6 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      test_pypi:
-        description: 'Publish to TestPyPI instead of PyPI'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   build-and-publish:
@@ -43,22 +36,10 @@ jobs:
     - name: Build package
       run: uv build
 
-    - name: Publish to TestPyPI
-      if: github.event.inputs.test_pypi == 'true'
-      run: |
-        uv publish --publish-url https://test.pypi.org/legacy/
-      env:
-        UV_PUBLISH_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
-
     - name: Publish to PyPI
-      if: github.event.inputs.test_pypi != 'true'
-      run: |
-        uv publish
-      env:
-        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Create GitHub Release Assets
       uses: softprops/action-gh-release@v1
-      if: github.event_name == 'release'
       with:
         files: dist/*
