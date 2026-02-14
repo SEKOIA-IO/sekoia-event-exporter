@@ -1,6 +1,7 @@
 # Sekoia.io Event Exporter
 
 [![CI](https://github.com/sekoia-io/sekoia-event-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/sekoia-io/sekoia-event-exporter/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/sekoia-event-exporter.svg)](https://pypi.org/project/sekoia-event-exporter/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,62 +13,51 @@ A Python CLI tool to export search job results from the Sekoia.io API.
 - Monitor export progress with real-time updates and ETA
 - Check status of existing export tasks
 - Configurable polling intervals and timeouts
-- Clean, modern Python package with full type hints
 
 ## Installation
 
-### Prerequisites
+### From PyPI
 
-This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable dependency management. Install uv first:
+The easiest way to install is from PyPI:
 
 ```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Or with pip
-pip install uv
+pip install sekoia-event-exporter
 ```
 
-### From Source (Recommended)
+Or using [uv](https://docs.astral.sh/uv/) for faster installation:
+
+```bash
+uv pip install sekoia-event-exporter
+```
+
+### From Source
+
+If you want to install from source or contribute to the project:
 
 ```bash
 # Clone the repository
 git clone https://github.com/sekoia-io/sekoia-event-exporter.git
 cd sekoia-event-exporter
 
-# Install the package with uv
+# Install with uv (recommended)
 uv sync
+
+# Or with pip
+pip install .
 ```
 
 ### For Development
 
 ```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh  # macOS/Linux
+# or: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
+
 # Install with all development dependencies
 uv sync --all-extras
 
-# Run commands with uv
-uv run sekoia-event-export --help
-```
-
-### Alternative: Using pip
-
-```bash
-# Install from source
-pip install .
-
-# Or in editable mode with development dependencies
+# Or using pip
 pip install -e ".[dev]"
-```
-
-### From PyPI (once published)
-
-```bash
-uv pip install sekoia-event-exporter
-# or with pip
-pip install sekoia-event-exporter
 ```
 
 ## Configuration
@@ -93,20 +83,20 @@ Sekoia.io operates multiple regional instances. By default, the tool uses the Eu
 **Option 1: Environment Variable**
 
 ```bash
-export API_HOST="api.us.sekoia.io"  # For US region
+export API_HOST="api.usa1.sekoia.io"  # For USA1 region
 ```
 
 Or in your `.env` file:
 
 ```bash
-API_HOST=api.us.sekoia.io
+API_HOST=api.usa1.sekoia.io
 ```
 
 **Option 2: Command-Line Argument**
 
 ```bash
-sekoia-event-export export <job_uuid> --api-host api.us.sekoia.io
-sekoia-event-export status <task_uuid> --api-host api.us.sekoia.io
+sekoia-event-export export <job_uuid> --api-host api.usa1.sekoia.io
+sekoia-event-export status <task_uuid> --api-host api.usa1.sekoia.io
 ```
 
 **Option 3: Default**

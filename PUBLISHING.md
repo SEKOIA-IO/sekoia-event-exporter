@@ -2,6 +2,8 @@
 
 This guide explains how to publish the `sekoia-event-exporter` package to PyPI.
 
+**Note**: The package is already published on PyPI at https://pypi.org/project/sekoia-event-exporter/. Use this guide for publishing new versions.
+
 ## Prerequisites
 
 1. **PyPI Account**: Create accounts on both:
