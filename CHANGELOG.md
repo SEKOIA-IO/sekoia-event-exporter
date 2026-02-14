@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated PyPI publishing workflow to use official PyPA `pypi-publish` action
 - Enabled trusted publishing via OIDC for enhanced security (no API tokens required)
 - Improved GitHub Actions workflow for more reliable package publishing
+- **BREAKING**: Dropped Python 3.9 support, now requires Python 3.10+ (for native union type syntax)
 
 ## [0.1.0] - 2026-02-10
 

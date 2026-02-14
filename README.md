@@ -1,7 +1,7 @@
 # Sekoia.io Event Exporter
 
 [![CI](https://github.com/sekoia-io/sekoia-event-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/sekoia-io/sekoia-event-exporter/actions/workflows/ci.yml)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Python CLI tool to export search job results from the Sekoia.io API.
@@ -296,7 +296,7 @@ Polls the export task status until completion or timeout.
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - requests >= 2.28.0
 
 ## License

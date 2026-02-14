@@ -228,7 +228,7 @@ git push origin feature/your-feature-name
 
    When you open a pull request, automated CI checks will run:
 
-   - **Tests**: Runs test suite on Python 3.8, 3.9, 3.10, 3.11, and 3.12
+   - **Tests**: Runs test suite on Python 3.10, 3.11, 3.12, and 3.13
    - **Code Quality**: Checks formatting (black), linting (ruff), and type hints (mypy)
    - **Coverage**: Generates code coverage report
 

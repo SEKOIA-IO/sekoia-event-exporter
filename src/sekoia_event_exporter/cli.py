@@ -16,7 +16,6 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
-from typing import Optional
 
 import requests
 
@@ -31,7 +30,7 @@ class ConfigError(RuntimeError):
     pass
 
 
-def get_api_host(api_host: Optional[str] = None) -> str:
+def get_api_host(api_host: str | None = None) -> str:
     """Get the API host from argument, environment variable, or default.
 
     Priority:
@@ -122,7 +121,7 @@ def poll_status(
     session: requests.Session,
     api_host: str,
     interval_s: int = DEFAULT_INTERVAL_S,
-    max_wait_s: Optional[int] = None,
+    max_wait_s: int | None = None,
 ) -> None:
     """Poll the export task status until completion or timeout.
 

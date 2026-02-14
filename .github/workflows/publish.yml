@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for trusted publishing
-      contents: read
+      contents: write  # Required for uploading release assets
 
     steps:
     - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
 
     - name: Install dependencies
       run: uv sync --all-extras
@@ -38,6 +38,8 @@ jobs:
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
 
     - name: Create GitHub Release Assets
       uses: softprops/action-gh-release@v1
