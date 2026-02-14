@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 
 import requests
 
+from . import __version__
+
 DEFAULT_API_HOST = "api.sekoia.io"
 DEFAULT_INTERVAL_S = 2
 DEFAULT_TIMEOUT = (5, 30)  # (connect, read)
@@ -205,9 +207,8 @@ def cmd_status(args) -> None:
 
 def main() -> None:
     """Main entry point for the CLI."""
-    parser = argparse.ArgumentParser(
-        description="Sekoia.io Event Exporter - Export search job results", prog="sekoia-event-export"
-    )
+    parser = argparse.ArgumentParser(description="Sekoia.io Event Exporter - Export search job results")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     export_parser = subparsers.add_parser("export", help="Export search job results")

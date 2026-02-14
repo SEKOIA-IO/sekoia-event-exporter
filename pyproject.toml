@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sekoia-event-exporter"
-version = "0.2.0"
+version = "0.3.0"
 description = "Export search job results from Sekoia.io API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -44,6 +44,7 @@ dev = [
 
 [project.scripts]
 sekoia-event-export = "sekoia_event_exporter:main"
+see = "sekoia_event_exporter:main"
 
 [project.urls]
 Homepage = "https://github.com/sekoia-io/sekoia-event-exporter"

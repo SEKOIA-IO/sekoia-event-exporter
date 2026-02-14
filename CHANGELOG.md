@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.3.0] - 2026-02-14
+
+### Added
+- Added `--version` flag to display package version
+- Added `see` command alias as a shorter alternative to `sekoia-event-export`
+
 ## [0.2.0] - 2026-02-14
 
 ### Changed
@@ -76,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sekoia-io/sekoia-event-exporter/releases/tag/v0.1.0

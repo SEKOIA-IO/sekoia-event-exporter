@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sekoia_event_exporter.cli import DEFAULT_API_HOST, ConfigError, create_http_session, get_api_host
+from sekoia_event_exporter.cli import DEFAULT_API_HOST, ConfigError, create_http_session, get_api_host, main
 
 
 def test_create_http_session_missing_api_key():
@@ -52,6 +52,15 @@ def test_get_api_host_argument_overrides_env():
     with patch.dict("os.environ", {"API_HOST": env_host}):
         result = get_api_host(arg_host)
         assert result == arg_host
+
+
+def test_version_flag():
+    """Test that --version flag displays the correct version."""
+    with patch("sys.argv", ["sekoia-event-export", "--version"]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        # argparse exits with code 0 when --version is used
+        assert exc_info.value.code == 0
 
 
 # Additional tests can be added here for trigger_export, fetch_task, and poll_status
