@@ -1,6 +1,8 @@
 """Sekoia.io Event Exporter - Export search job results from Sekoia.io API."""
 
-__version__ = "0.3.0"
+from importlib.metadata import version
+
+__version__ = version("sekoia-event-exporter")
 __author__ = "Sekoia.io"
 __license__ = "MIT"
 
