@@ -25,6 +25,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.4.0] - 2026-02-15
+
+### Added
+- **Automatic SSE-C encryption by default**: All exports are now encrypted with auto-generated 256-bit keys
+- **Automatic file download**: Exports are automatically downloaded when ready with progress indicators
+- **Custom S3 configuration support**: Full control over S3 settings including bucket, endpoint, region, and credentials
+- **SSE-C encryption with customer-provided keys**: Support for server-side encryption with custom keys
+- **Auto-generated encryption keys**: Tool generates cryptographically secure keys when none provided
+- **Automatic MD5 computation**: SSE-C key MD5 hashes are automatically computed
+- `--no-sse-c` flag to disable encryption when needed
+- `--no-download` flag to skip automatic download and only display URL
+- `--output` / `-o` flag to specify custom output filename for downloads
+- `--s3-bucket`, `--s3-prefix`, `--s3-access-key`, `--s3-secret-key`, `--s3-endpoint`, `--s3-region` flags for custom S3 configuration
+- `--s3-sse-c-key`, `--s3-sse-c-key-md5`, `--s3-sse-c-algorithm` flags for SSE-C encryption control
+- Environment variable support for all S3 and SSE-C settings
+- Prominent warnings when encryption keys are auto-generated, reminding users to save them
+- Comprehensive documentation on SSE-C encryption and key generation
+- Multiple methods for generating SSE-C keys (OpenSSL, Python, /dev/urandom)
+- Streaming download with progress indicator for large files
+- PyPI badge in README
+
+### Changed
+- Updated documentation to reflect PyPI availability
+- Reorganized README installation section with PyPI as primary method
+- Enhanced SSE-C documentation with security warnings and best practices
+- Updated help text for all commands to clarify encryption defaults
+
+### Fixed
+- HTTP 400 error when downloading files from pre-signed S3 URLs (removed conflicting Authorization header)
+- SSE-C key validation now ensures keys are exactly 32 bytes (256 bits)
+- Display logic now correctly shows encryption status only when actually configured
+- Status command no longer auto-generates keys (requires key from original export)
+
+### Security
+- **Encryption enabled by default**: All exports are now encrypted with SSE-C unless explicitly disabled
+- Automatic generation of cryptographically secure 256-bit encryption keys using `os.urandom()`
+- Clear warnings about key loss and inability to decrypt data without the key
+- Validation of SSE-C keys to ensure they meet AWS S3 requirements (32 bytes)
+
 ## [0.3.0] - 2026-02-14
 
 ### Added
@@ -82,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sekoia-io/sekoia-event-exporter/releases/tag/v0.1.0
