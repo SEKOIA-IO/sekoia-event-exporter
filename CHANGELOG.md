@@ -25,6 +25,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.5.0] - 2026-02-15
+
+### Added
+- **Field selection**: Specify which fields to export with `--fields` option (defaults to `message,timestamp` only)
+- **New `download` command**: Dedicated command to download completed exports
+- Visual progress bars with Unicode characters (█░) for export and download operations
+- Color-coded output with ANSI colors (automatically disabled for non-TTY environments)
+- Download speed indicator (MB/s) during file downloads
+- Human-readable file size formatting (KB, MB, GB)
+- Animated spinner for exports with unknown progress
+- Formatted time deltas (e.g., "2m 30s", "1h 15m")
+- Improved header display with visual separators
+- `EXPORT_FIELDS` environment variable support for default field selection
+
+### Changed
+- **BREAKING**: `status` command no longer downloads files automatically - use the new `download` command instead
+- **BREAKING**: `status` command now performs a single status check instead of polling continuously
+- **BREAKING**: Default export fields changed to only `message` and `timestamp` (was all fields)
+- Added documentation clarifying that API key only requires "Massive export of events" permission
+- Export progress now updates on a single line instead of scrolling
+- Download progress shows real-time speed and remaining time
+- Enhanced visual feedback with checkmarks (✓), warnings (⚠), and color coding
+- Progress bars change color based on completion (red < 33%, yellow < 66%, green ≥ 66%)
+- Time estimates now calculate remaining time based on observed progress rate between polls (not elapsed time)
+- Display shows "⏱ 2m 30s remaining" instead of "ETA: 14:38:42" for clarity
+- Better formatting for encryption key warnings with visual separators
+- `status` command now displays download URL and suggests using `download` command
+
+### Fixed
+- Time remaining estimates are now accurate when restarting the status command mid-export
+- Remaining time calculation now based on actual progress rate, not command start time
+
 ## [0.4.0] - 2026-02-15
 
 ### Added
@@ -121,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.1.0...v0.2.0

@@ -3,8 +3,9 @@ Sekoia.io Export Script
 
 This script exports search job results from Sekoia.io API.
 Usage:
-  sekoia-event-export export <job_uuid>
-  sekoia-event-export status <task_uuid>
+  sekoia-event-export export <job_uuid>   # Trigger and monitor export
+  sekoia-event-export status <task_uuid>  # Check task status
+  sekoia-event-export download <task_uuid>  # Download completed export
 
 Environment:
   API_KEY: Sekoia API token
@@ -27,12 +28,119 @@ from . import __version__
 DEFAULT_API_HOST = "api.sekoia.io"
 DEFAULT_INTERVAL_S = 2
 DEFAULT_TIMEOUT = (5, 30)  # (connect, read)
+DEFAULT_EXPORT_FIELDS = ["message", "timestamp"]  # Default fields to export
 
 
 class ConfigError(RuntimeError):
     """Configuration error exception."""
 
     pass
+
+
+# ANSI color codes for terminal output
+class Colors:
+    """ANSI color codes for styled terminal output."""
+
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    RESET = "\033[0m"
+
+    @staticmethod
+    def is_tty() -> bool:
+        """Check if stdout is a TTY (terminal)."""
+        return sys.stdout.isatty()
+
+    @classmethod
+    def disable_if_not_tty(cls):
+        """Disable colors if not running in a terminal."""
+        if not cls.is_tty():
+            cls.BLUE = cls.GREEN = cls.YELLOW = cls.RED = cls.BOLD = cls.DIM = cls.RESET = ""
+
+
+# Disable colors if not in a TTY
+Colors.disable_if_not_tty()
+
+
+def format_bytes(bytes_count: int | float) -> str:
+    """Format bytes into human-readable format.
+
+    Args:
+        bytes_count: Number of bytes to format.
+
+    Returns:
+        str: Human-readable size string (e.g., "1.5 MB", "750 KB").
+
+    Example:
+        >>> format_bytes(1536)
+        '1.5 KB'
+        >>> format_bytes(1048576)
+        '1.0 MB'
+    """
+    size = float(bytes_count)
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} PB"
+
+
+def create_progress_bar(percentage: float, width: int = 40) -> str:
+    """Create a visual progress bar using Unicode box-drawing characters.
+
+    Args:
+        percentage: Progress percentage (0-100).
+        width: Width of the progress bar in characters.
+
+    Returns:
+        str: A colored progress bar string.
+
+    Example:
+        >>> create_progress_bar(50, 20)
+        '██████████░░░░░░░░░░'
+    """
+    filled = int((percentage / 100) * width)
+    bar = "█" * filled + "░" * (width - filled)
+
+    # Color the bar based on progress
+    if percentage < 33:
+        color = Colors.RED
+    elif percentage < 66:
+        color = Colors.YELLOW
+    else:
+        color = Colors.GREEN
+
+    return f"{color}{bar}{Colors.RESET}"
+
+
+def format_time_delta(seconds: float) -> str:
+    """Format a time delta in seconds to human-readable format.
+
+    Args:
+        seconds: Number of seconds.
+
+    Returns:
+        str: Formatted time string (e.g., "2m 30s", "1h 15m").
+
+    Example:
+        >>> format_time_delta(150)
+        '2m 30s'
+        >>> format_time_delta(3665)
+        '1h 1m'
+    """
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{minutes}m {secs}s" if secs > 0 else f"{minutes}m"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
 
 
 def generate_random_b64_sse_key() -> str:
@@ -56,6 +164,41 @@ def generate_random_b64_sse_key() -> str:
     """
     random_bytes = os.urandom(32)  # 32 bytes = 256 bits
     return base64.b64encode(random_bytes).decode("utf-8")
+
+
+def get_export_fields(fields_arg: str | None = None) -> list[str]:
+    """Get the list of fields to export.
+
+    Args:
+        fields_arg: Optional comma-separated fields value from command-line argument.
+
+    Returns:
+        list[str]: List of field names to export.
+
+    Priority:
+        1. Command-line argument (--fields)
+        2. Environment variable (EXPORT_FIELDS)
+        3. Default fields (message, timestamp)
+
+    Example:
+        >>> get_export_fields("message,timestamp,source.ip")
+        ['message', 'timestamp', 'source.ip']
+        >>> get_export_fields()  # Uses defaults
+        ['message', 'timestamp']
+    """
+    # Check command-line argument first
+    if fields_arg:
+        # Split by comma and strip whitespace
+        return [field.strip() for field in fields_arg.split(",") if field.strip()]
+
+    # Check environment variable
+    env_value = os.getenv("EXPORT_FIELDS")
+    if env_value:
+        # Split by comma and strip whitespace
+        return [field.strip() for field in env_value.split(",") if field.strip()]
+
+    # Return default fields
+    return DEFAULT_EXPORT_FIELDS.copy()
 
 
 def get_api_host(api_host: str | None = None) -> str:
@@ -268,9 +411,9 @@ def download_file(
         headers["x-amz-server-side-encryption-customer-key"] = s3_config["sse_customer_key"]
         headers["x-amz-server-side-encryption-customer-key-MD5"] = s3_config["sse_customer_key_md5"]
 
-    print(f"Downloading to: {output_filename}")
+    print(f"\n{Colors.BOLD}Downloading:{Colors.RESET} {output_filename}")
     if headers:
-        print("Using SSE-C encryption headers for download")
+        print(f"{Colors.DIM}Using SSE-C encryption headers{Colors.RESET}")
 
     try:
         resp = requests.get(download_url, headers=headers, stream=True, timeout=(5, 60))
@@ -279,19 +422,45 @@ def download_file(
         # Get total size if available
         total_size = int(resp.headers.get("content-length", 0))
         downloaded = 0
+        start_time = time.time()
+        last_update = start_time
 
         with open(output_filename, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
                     downloaded += len(chunk)
-                    if total_size > 0:
-                        progress = (downloaded / total_size) * 100
-                        print(f"\rProgress: {progress:.1f}% ({downloaded}/{total_size} bytes)", end="")
+                    current_time = time.time()
 
+                    # Update progress every 0.1 seconds to avoid flickering
+                    if total_size > 0 and (current_time - last_update) >= 0.1:
+                        progress = (downloaded / total_size) * 100
+                        elapsed = current_time - start_time
+                        speed = downloaded / elapsed if elapsed > 0 else 0
+
+                        # Create progress bar
+                        bar = create_progress_bar(progress, width=30)
+
+                        # Format the progress line
+                        progress_line = (
+                            f"\r{bar} {Colors.BOLD}{progress:5.1f}%{Colors.RESET} | "
+                            f"{Colors.BLUE}{format_bytes(downloaded)}{Colors.RESET} / "
+                            f"{format_bytes(total_size)} | "
+                            f"{Colors.GREEN}{format_bytes(int(speed))}/s{Colors.RESET}"
+                        )
+                        print(progress_line, end="", flush=True)
+                        last_update = current_time
+
+        # Final newline and completion message
         if total_size > 0:
-            print()  # New line after progress
-        print(f"Download complete: {output_filename} ({downloaded} bytes)")
+            elapsed = time.time() - start_time
+            print(
+                f"\n{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Download complete{Colors.RESET} "
+                f"({format_bytes(downloaded)} in {format_time_delta(elapsed)})"
+            )
+        else:
+            print(f"\n{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Download complete{Colors.RESET}")
+            print(f"({format_bytes(downloaded)})")
         return output_filename
 
     except Exception as e:
@@ -346,22 +515,31 @@ def poll_status(
     start_time = datetime.now()
     deadline = (start_time + timedelta(seconds=max_wait_s)) if max_wait_s else None
 
+    # Track progress between polls to calculate accurate rate
+    last_progress_count = None
+    last_poll_time = None
+
     while True:
         if deadline and datetime.now() >= deadline:
             raise TimeoutError(f"Timed out after {max_wait_s}s waiting for task {task_uuid}")
 
+        current_poll_time = datetime.now()
         data = fetch_task(task_uuid, session, api_host)
 
         task_status = data.get("status")
         if task_status == "FINISHED":
             download_url = data.get("attributes", {}).get("download_url")
+            # Clear the progress line
+            print(f"\r{' ' * 100}\r", end="")
             if download_url:
-                print(f"Export ready! Download URL: {download_url}")
+                print(f"{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Export ready!{Colors.RESET}")
             else:
-                print("Export finished but no download URL found.")
+                print(f"{Colors.YELLOW}⚠{Colors.RESET} Export finished but no download URL found.")
             return download_url
 
         if task_status in ("FAILED", "CANCELED", "CANCELLED"):
+            # Clear the progress line
+            print(f"\r{' ' * 100}\r", end="")
             # Some APIs include error info in attributes or a message field
             err = data.get("message") or data.get("attributes", {}).get("error") or data
             raise RuntimeError(f"Task ended with status={task_status}. Details: {err}")
@@ -371,23 +549,52 @@ def poll_status(
 
         if total > 0:
             progress = 100 * progress_count / total
-            elapsed = datetime.now() - start_time
 
-            if progress_count > 0:
-                estimated_total_time = elapsed * (total / progress_count)
-                eta = start_time + estimated_total_time
-                eta_str = eta.strftime("%H:%M:%S")
+            # Calculate remaining time based on observed progress rate between polls
+            if last_progress_count is not None and last_poll_time is not None and progress_count > last_progress_count:
+                time_diff = (current_poll_time - last_poll_time).total_seconds()
+                progress_diff = progress_count - last_progress_count
+
+                if time_diff > 0 and progress_diff > 0:
+                    # Calculate items per second based on observed rate
+                    items_per_second = progress_diff / time_diff
+                    remaining_items = total - progress_count
+                    remaining_seconds = remaining_items / items_per_second
+                    eta_str = format_time_delta(remaining_seconds)
+                else:
+                    eta_str = "calculating..."
             else:
-                eta_str = f"calculating... ({task_status})"
+                eta_str = "calculating..."
 
-            current_time = datetime.now().strftime("%H:%M:%S")
-            print(
-                f"{current_time} {progress:.2f}% ({progress_count}/{total}) "
-                f"completed... ETA: {eta_str} (status={task_status})"
+            # Update tracking variables for next iteration
+            last_progress_count = progress_count
+            last_poll_time = current_poll_time
+
+            # Create progress bar
+            bar = create_progress_bar(progress, width=30)
+
+            # Format progress count with thousand separators
+            progress_str = f"{progress_count:,} / {total:,}"
+
+            # Build the progress line
+            progress_line = (
+                f"\r{Colors.BLUE}Exporting:{Colors.RESET} {bar} "
+                f"{Colors.BOLD}{progress:5.1f}%{Colors.RESET} | "
+                f"{progress_str} events | "
+                f"{Colors.YELLOW}⏱  {eta_str} remaining{Colors.RESET}"
             )
+            print(progress_line, end="", flush=True)
         else:
-            current_time = datetime.now().strftime("%H:%M:%S")
-            print(f"{current_time} status={task_status} (progress unavailable)")
+            # When total is unknown, show a spinner
+            spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+            elapsed_seconds = (datetime.now() - start_time).total_seconds()
+            spinner_char = spinner[int(elapsed_seconds / 0.2) % len(spinner)]
+
+            progress_line = (
+                f"\r{Colors.BLUE}{spinner_char} Exporting:{Colors.RESET} "
+                f"{Colors.DIM}status={task_status} (progress unavailable){Colors.RESET}"
+            )
+            print(progress_line, end="", flush=True)
 
         time.sleep(interval_s)
 
@@ -397,8 +604,14 @@ def cmd_export(args) -> None:
     api_host = get_api_host(args.api_host)
     session = create_http_session()
     s3_config = build_s3_config(args)
+    fields = get_export_fields(getattr(args, "fields", None))
 
-    print(f"Using API host: {api_host}")
+    # Header
+    print(f"\n{Colors.BOLD}Sekoia Event Exporter{Colors.RESET}")
+    print(f"{Colors.DIM}{'─' * 50}{Colors.RESET}")
+    print(f"{Colors.BLUE}API Host:{Colors.RESET} {api_host}")
+    print(f"{Colors.BLUE}Export Fields:{Colors.RESET} {', '.join(fields)}")
+
     if s3_config:
         # Check if encryption key was auto-generated
         generated_key = s3_config.pop("_generated_key", None)
@@ -416,23 +629,26 @@ def cmd_export(args) -> None:
             # Show non-sensitive S3 bucket configuration
             display_keys = [k for k in s3_bucket_keys if "key" not in k.lower() and "secret" not in k.lower()]
             if display_keys:
-                print(f"Using custom S3 configuration: {', '.join(display_keys)}")
+                print(f"{Colors.BLUE}S3 Config:{Colors.RESET} {', '.join(display_keys)}")
 
         if has_sse_c:
             if generated_key:
-                print("\n" + "=" * 80)
-                print("⚠️  SSE-C ENCRYPTION KEY AUTO-GENERATED")
-                print("=" * 80)
-                print(f"Encryption Key: {generated_key}")
-                print("\n⚠️  IMPORTANT: Save this key securely!")
-                print("   You will need it to download this export later.")
-                print("   If you lose this key, you will NOT be able to decrypt your data.")
-                print("=" * 80 + "\n")
+                print(f"\n{Colors.YELLOW}{'═' * 80}{Colors.RESET}")
+                print(f"{Colors.YELLOW}⚠  SSE-C ENCRYPTION KEY AUTO-GENERATED{Colors.RESET}")
+                print(f"{Colors.YELLOW}{'═' * 80}{Colors.RESET}")
+                print(f"{Colors.BOLD}Encryption Key:{Colors.RESET} {Colors.GREEN}{generated_key}{Colors.RESET}")
+                print(
+                    f"\n{Colors.YELLOW}⚠  IMPORTANT:{Colors.RESET} {Colors.BOLD}Save this key securely!{Colors.RESET}"
+                )
+                print(f"{Colors.DIM}   • You will need it to download this export later{Colors.RESET}")
+                print(f"{Colors.DIM}   • If you lose this key, you will NOT be able to decrypt your data{Colors.RESET}")
+                print(f"{Colors.YELLOW}{'═' * 80}{Colors.RESET}\n")
             else:
-                print("SSE-C encryption enabled")
+                print(f"{Colors.GREEN}🔒 SSE-C encryption enabled{Colors.RESET}")
 
-    task_uuid = trigger_export(args.job_uuid, session, api_host, s3_config=s3_config)
-    print(f"Export task triggered with UUID: {task_uuid}")
+    task_uuid = trigger_export(args.job_uuid, session, api_host, s3_config=s3_config, fields=fields)
+    print(f"\n{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Export triggered{Colors.RESET}")
+    print(f"{Colors.DIM}Task UUID: {task_uuid}{Colors.RESET}\n")
 
     download_url = poll_status(task_uuid, session, api_host, interval_s=args.interval, max_wait_s=args.max_wait)
 
@@ -441,44 +657,111 @@ def cmd_export(args) -> None:
         try:
             download_file(download_url, output_filename=args.output, s3_config=s3_config)
         except Exception as e:
-            print(f"Warning: Download failed: {e}", file=sys.stderr)
-            print(f"You can manually download from: {download_url}", file=sys.stderr)
+            print(f"\n{Colors.RED}✗ Download failed:{Colors.RESET} {e}", file=sys.stderr)
+            print(f"{Colors.YELLOW}→{Colors.RESET} Manual download: {download_url}", file=sys.stderr)
 
 
 def cmd_status(args) -> None:
-    """Execute the status command."""
+    """Execute the status command - shows task status without downloading."""
     api_host = get_api_host(args.api_host)
     session = create_http_session()
-    # Don't auto-generate key for status - must use the key from the original export
+
+    # Header
+    print(f"\n{Colors.BOLD}Sekoia Event Exporter - Status{Colors.RESET}")
+    print(f"{Colors.DIM}{'─' * 50}{Colors.RESET}")
+    print(f"{Colors.BLUE}API Host:{Colors.RESET} {api_host}")
+    print(f"{Colors.BLUE}Task UUID:{Colors.RESET} {args.task_uuid}\n")
+
+    # Fetch current task status (single check, no polling)
+    try:
+        data = fetch_task(args.task_uuid, session, api_host)
+        task_status = data.get("status")
+        total = data.get("total", 0) or 0
+        progress_count = data.get("progress", 0) or 0
+
+        # Display status
+        print(f"{Colors.BOLD}Status:{Colors.RESET} {task_status}")
+
+        if total > 0:
+            progress = 100 * progress_count / total
+            bar = create_progress_bar(progress, width=30)
+            progress_str = f"{progress_count:,} / {total:,}"
+            print(f"{Colors.BOLD}Progress:{Colors.RESET} {bar} {progress:5.1f}%")
+            print(f"{Colors.BOLD}Events:{Colors.RESET} {progress_str}")
+
+        # Show download URL if available
+        if task_status == "FINISHED":
+            download_url = data.get("attributes", {}).get("download_url")
+            if download_url:
+                print(f"\n{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Export complete!{Colors.RESET}")
+                print(f"{Colors.BLUE}Download URL:{Colors.RESET}")
+                print(f"{Colors.DIM}{download_url}{Colors.RESET}")
+                print(
+                    f"\n{Colors.YELLOW}→{Colors.RESET} Use the {Colors.BOLD}download{Colors.RESET} command to download:"
+                )
+                print(f"  {Colors.DIM}sekoia-event-export download {args.task_uuid}{Colors.RESET}")
+            else:
+                print(f"\n{Colors.YELLOW}⚠{Colors.RESET} Export finished but no download URL found.")
+        elif task_status in ("FAILED", "CANCELED", "CANCELLED"):
+            err = data.get("message") or data.get("attributes", {}).get("error") or "No error details available"
+            print(f"\n{Colors.RED}✗{Colors.RESET} {Colors.BOLD}Task {task_status.lower()}{Colors.RESET}")
+            print(f"{Colors.RED}Error:{Colors.RESET} {err}")
+        else:
+            print(f"\n{Colors.YELLOW}⏱{Colors.RESET} Export still in progress")
+            print(f"{Colors.DIM}Use the status command again to check progress{Colors.RESET}")
+
+    except Exception as e:
+        print(f"\n{Colors.RED}✗ Failed to fetch task status:{Colors.RESET} {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_download(args) -> None:
+    """Execute the download command - downloads a completed export."""
+    api_host = get_api_host(args.api_host)
+    session = create_http_session()
+    # Don't auto-generate key for download - must use the key from the original export
     s3_config = build_s3_config(args, auto_generate_key=False)
 
-    print(f"Using API host: {api_host}")
-    if s3_config:
-        # Check if encryption key was auto-generated
-        generated_key = s3_config.pop("_generated_key", None)
+    # Header
+    print(f"\n{Colors.BOLD}Sekoia Event Exporter - Download{Colors.RESET}")
+    print(f"{Colors.DIM}{'─' * 50}{Colors.RESET}")
+    print(f"{Colors.BLUE}API Host:{Colors.RESET} {api_host}")
+    print(f"{Colors.BLUE}Task UUID:{Colors.RESET} {args.task_uuid}\n")
 
-        if "sse_customer_key" in s3_config:
-            if generated_key:
-                print("\n" + "=" * 80)
-                print("⚠️  SSE-C ENCRYPTION KEY AUTO-GENERATED")
-                print("=" * 80)
-                print(f"Encryption Key: {generated_key}")
-                print("\n⚠️  IMPORTANT: Save this key securely!")
-                print("   This key was auto-generated for downloading the encrypted export.")
-                print("   If the export was encrypted with a different key, provide it with --s3-sse-c-key")
-                print("=" * 80 + "\n")
-            else:
-                print("SSE-C encryption headers configured for download")
+    # Fetch task to get download URL
+    try:
+        data = fetch_task(args.task_uuid, session, api_host)
+        task_status = data.get("status")
 
-    download_url = poll_status(args.task_uuid, session, api_host, interval_s=args.interval, max_wait_s=args.max_wait)
+        if task_status != "FINISHED":
+            print(f"{Colors.YELLOW}⚠{Colors.RESET} {Colors.BOLD}Export not ready yet{Colors.RESET}")
+            print(f"{Colors.BOLD}Status:{Colors.RESET} {task_status}")
 
-    # Download the file if URL is available and download is not disabled
-    if download_url and not args.no_download:
+            total = data.get("total", 0) or 0
+            progress_count = data.get("progress", 0) or 0
+            if total > 0:
+                progress = 100 * progress_count / total
+                print(f"{Colors.BOLD}Progress:{Colors.RESET} {progress:.1f}% ({progress_count:,} / {total:,} events)")
+
+            print(f"\n{Colors.DIM}Use 'sekoia-event-export status {args.task_uuid}' to monitor progress{Colors.RESET}")
+            sys.exit(1)
+
+        download_url = data.get("attributes", {}).get("download_url")
+        if not download_url:
+            print(f"{Colors.RED}✗{Colors.RESET} Export finished but no download URL found.")
+            sys.exit(1)
+
+        # Download the file
         try:
             download_file(download_url, output_filename=args.output, s3_config=s3_config)
         except Exception as e:
-            print(f"Warning: Download failed: {e}", file=sys.stderr)
-            print(f"You can manually download from: {download_url}", file=sys.stderr)
+            print(f"\n{Colors.RED}✗ Download failed:{Colors.RESET} {e}", file=sys.stderr)
+            print(f"{Colors.YELLOW}→{Colors.RESET} Manual download: {download_url}", file=sys.stderr)
+            sys.exit(1)
+
+    except Exception as e:
+        print(f"\n{Colors.RED}✗ Failed to fetch task:{Colors.RESET} {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main() -> None:
@@ -494,6 +777,12 @@ def main() -> None:
     export_parser.add_argument("--max-wait", type=int, default=None, help="Max wait time in seconds (optional)")
     export_parser.add_argument("--no-download", action="store_true", help="Don't download the file, just print the URL")
     export_parser.add_argument("--output", "-o", type=str, default=None, help="Output filename for the downloaded file")
+    export_parser.add_argument(
+        "--fields",
+        type=str,
+        default=None,
+        help="Comma-separated list of fields to export (default: message,timestamp, overrides EXPORT_FIELDS env var)",
+    )
 
     # S3 Configuration
     s3_group = export_parser.add_argument_group("S3 Configuration", "Custom S3 settings for the export")
@@ -534,41 +823,46 @@ def main() -> None:
 
     export_parser.set_defaults(func=cmd_export)
 
-    status_parser = subparsers.add_parser("status", help="Check export job status")
+    status_parser = subparsers.add_parser("status", help="Check export task status (without downloading)")
     status_parser.add_argument("task_uuid", help="The UUID of the export task")
     status_parser.add_argument("--api-host", type=str, default=None, help="API host (overrides API_HOST env var)")
-    status_parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_S, help="Polling interval in seconds")
-    status_parser.add_argument("--max-wait", type=int, default=None, help="Max wait time in seconds (optional)")
-    status_parser.add_argument("--no-download", action="store_true", help="Don't download the file, just print the URL")
-    status_parser.add_argument("--output", "-o", type=str, default=None, help="Output filename for the downloaded file")
 
-    # SSE-C Encryption for status command (needed for downloading encrypted exports)
-    status_sse_group = status_parser.add_argument_group(
+    status_parser.set_defaults(func=cmd_status)
+
+    download_parser = subparsers.add_parser("download", help="Download a completed export")
+    download_parser.add_argument("task_uuid", help="The UUID of the export task to download")
+    download_parser.add_argument("--api-host", type=str, default=None, help="API host (overrides API_HOST env var)")
+    download_parser.add_argument(
+        "--output", "-o", type=str, default=None, help="Output filename for the downloaded file"
+    )
+
+    # SSE-C Encryption for download command (needed for downloading encrypted exports)
+    download_sse_group = download_parser.add_argument_group(
         "SSE-C Encryption", "Encryption headers for download (exports are encrypted by default)"
     )
-    status_sse_group.add_argument(
+    download_sse_group.add_argument(
         "--no-sse-c",
         action="store_true",
         help="Don't use SSE-C headers for download (use if export was created with --no-sse-c)",
     )
-    status_sse_group.add_argument(
+    download_sse_group.add_argument(
         "--s3-sse-c-key",
         type=str,
-        help="SSE-C encryption key, base64 encoded (overrides S3_SSE_C_KEY env var, auto-generated if not provided)",
+        help="SSE-C encryption key used during export, base64 encoded (overrides S3_SSE_C_KEY env var)",
     )
-    status_sse_group.add_argument(
+    download_sse_group.add_argument(
         "--s3-sse-c-key-md5",
         type=str,
         help="SSE-C encryption key MD5, base64 encoded (auto-computed if not provided)",
     )
-    status_sse_group.add_argument(
+    download_sse_group.add_argument(
         "--s3-sse-c-algorithm",
         type=str,
         default=None,
         help="SSE-C algorithm (default: AES256)",
     )
 
-    status_parser.set_defaults(func=cmd_status)
+    download_parser.set_defaults(func=cmd_download)
 
     args = parser.parse_args()
 

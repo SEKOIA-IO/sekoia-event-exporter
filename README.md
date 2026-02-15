@@ -79,6 +79,10 @@ Alternatively, you can create a `.env` file in your working directory:
 API_KEY=your-sekoia-api-key-here
 ```
 
+**Required Permission:**
+
+The API key only needs the **Massive export of events** permission. When creating your API key in Sekoia.io, you can limit its scope to this single permission following the principle of least privilege.
+
 ### Region Configuration
 
 Sekoia.io operates multiple regional instances. By default, the tool uses the European region (`api.sekoia.io`). To use a different region, you can configure the API host in one of three ways:
@@ -255,6 +259,19 @@ sekoia-event-export export 550e8400-e29b-41d4-a716-446655440000
 
 **The export will be automatically downloaded when ready.** The file is saved as `export_YYYYMMDD_HHMMSS.json.gz` by default.
 
+**Specify fields to export:**
+
+By default, only `message` and `timestamp` fields are exported to avoid exporting unnecessary data. You can specify additional fields:
+
+```bash
+# Export specific fields
+sekoia-event-export export <job_uuid> --fields "message,timestamp,source.ip,destination.ip"
+
+# Or using environment variable
+export EXPORT_FIELDS="message,timestamp,source.ip,user.name"
+sekoia-event-export export <job_uuid>
+```
+
 **Custom output filename:**
 
 ```bash
@@ -277,7 +294,7 @@ sekoia-event-export export <job_uuid> --interval 5 --max-wait 3600
 
 ### Check Export Status
 
-Check the status of an already-triggered export task and download when ready:
+Check the current status of an export task:
 
 ```bash
 sekoia-event-export status <task_uuid>
@@ -289,23 +306,48 @@ Example:
 sekoia-event-export status 660e8400-e29b-41d4-a716-446655440001
 ```
 
-**The file will be automatically downloaded when the task completes.**
+The status command shows:
+- Current export status (RUNNING, FINISHED, FAILED, etc.)
+- Progress percentage and event count
+- Download URL (when export is complete)
+
+**Note:** The status command performs a single status check and does NOT download the file. Use the `download` command to download completed exports.
+
+### Download Export
+
+Download a completed export:
+
+```bash
+sekoia-event-export download <task_uuid>
+```
+
+Example:
+
+```bash
+sekoia-event-export download 660e8400-e29b-41d4-a716-446655440001
+```
 
 **Important:** If the export was encrypted (default behavior), you must provide the same encryption key used during export:
 
 ```bash
 # Provide the key that was displayed when you created the export
-sekoia-event-export status <task_uuid> --s3-sse-c-key "<base64-key>"
+sekoia-event-export download <task_uuid> --s3-sse-c-key "<base64-key>"
 ```
 
 Or set it as an environment variable:
 
 ```bash
 export S3_SSE_C_KEY="<base64-key-from-export>"
-sekoia-event-export status <task_uuid>
+sekoia-event-export download <task_uuid>
 ```
 
-**Note:** The status command does NOT auto-generate a key. You must provide the exact key that was used (or auto-generated) when the export was created.
+**Custom output filename:**
+
+```bash
+sekoia-event-export download <task_uuid> --output my-export.json.gz
+# or using short form
+sekoia-event-export download <task_uuid> -o my-export.json.gz
+```
 
 ### Command Options
 
@@ -318,6 +360,7 @@ sekoia-event-export status <task_uuid>
 - `--max-wait`: Maximum wait time in seconds (default: no limit)
 - `--no-download`: Don't download the file, just print the URL
 - `--output`, `-o`: Output filename for the downloaded file (default: export_YYYYMMDD_HHMMSS.json.gz)
+- `--fields`: Comma-separated list of fields to export (default: message,timestamp, overrides EXPORT_FIELDS env var)
 
 **S3 Configuration:**
 - `--s3-bucket`: S3 bucket name (overrides S3_BUCKET env var)
@@ -338,9 +381,14 @@ sekoia-event-export status <task_uuid>
 **Basic Options:**
 - `task_uuid` (required): The UUID of the export task to check
 - `--api-host`: API host to use (overrides API_HOST env var, default: api.sekoia.io)
-- `--interval`: Polling interval in seconds (default: 2)
-- `--max-wait`: Maximum wait time in seconds (default: no limit)
-- `--no-download`: Don't download the file, just print the URL
+
+**Note:** The status command performs a single status check and does not download the file. Use the `download` command to download completed exports.
+
+#### `download` command
+
+**Basic Options:**
+- `task_uuid` (required): The UUID of the export task to download
+- `--api-host`: API host to use (overrides API_HOST env var, default: api.sekoia.io)
 - `--output`, `-o`: Output filename for the downloaded file (default: export_YYYYMMDD_HHMMSS.json.gz)
 
 **SSE-C Encryption (exports are encrypted by default):**
@@ -349,24 +397,50 @@ sekoia-event-export status <task_uuid>
 - `--s3-sse-c-key-md5`: SSE-C key MD5, base64 encoded (auto-computed if not provided)
 - `--s3-sse-c-algorithm`: SSE-C algorithm (default: AES256)
 
-**Note:** Unlike the export command, status does NOT auto-generate keys. You must provide the same key that was used when creating the export.
+**Note:** The download command does NOT auto-generate keys. You must provide the same key that was used when creating the export.
 
 ### Progress Monitoring
 
-The tool provides real-time progress updates when monitoring export tasks and automatically downloads when ready:
+The `export` command provides real-time progress updates with visual progress bars:
 
 ```
-Export task triggered with UUID: 660e8400-e29b-41d4-a716-446655440001
-14:32:15 25.50% (2550/10000) completed... ETA: 14:38:42 (status=RUNNING)
-14:32:17 26.00% (2600/10000) completed... ETA: 14:38:40 (status=RUNNING)
-...
-Export ready! Download URL: https://api.sekoia.io/v1/files/abc123/download
-Downloading to: export_20260214_143842.json.gz
-Progress: 100.0% (15728640/15728640 bytes)
-Download complete: export_20260214_143842.json.gz (15728640 bytes)
+Sekoia Event Exporter
+──────────────────────────────────────────────────
+API Host: api.sekoia.io
+
+✓ Export triggered
+Task UUID: 660e8400-e29b-41d4-a716-446655440001
+
+Exporting: ████████████░░░░░░░░░░░░░░░░░░ 40.0% | 4,000 / 10,000 events | ⏱ 2m 30s remaining
 ```
 
-If SSE-C encryption is enabled, the download automatically includes the required encryption headers.
+When the export completes and download starts:
+
+```
+✓ Export ready!
+
+Downloading: export_20260214_143842.json.gz
+██████████████████████████████ 100.0% | 15.0 MB / 15.0 MB | 2.5 MB/s
+✓ Download complete (15.0 MB in 6s)
+```
+
+The `status` command shows a snapshot of the current task state:
+
+```
+Sekoia Event Exporter - Status
+──────────────────────────────────────────────────
+API Host: api.sekoia.io
+Task UUID: 660e8400-e29b-41d4-a716-446655440001
+
+Status: RUNNING
+Progress: ████████████░░░░░░░░░░░░░░░░░░ 40.0%
+Events: 4,000 / 10,000
+
+⏱ Export still in progress
+Use the status command again to check progress
+```
+
+If SSE-C encryption is enabled, downloads automatically include the required encryption headers.
 
 ## Error Handling
 
