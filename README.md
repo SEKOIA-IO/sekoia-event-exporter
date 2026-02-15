@@ -33,6 +33,23 @@ Or using [uv](https://docs.astral.sh/uv/) for faster installation:
 uv pip install sekoia-event-exporter
 ```
 
+### Run with uvx (No Installation Required)
+
+You can run the tool directly without installing it using `uvx`:
+
+```bash
+# Run directly from PyPI
+uvx sekoia-event-exporter export <job_uuid>
+
+# Check version
+uvx sekoia-event-exporter --version
+
+# Get help
+uvx sekoia-event-exporter --help
+```
+
+This is perfect for one-time usage or CI/CD pipelines where you don't want to install the package.
+
 ### From Source
 
 If you want to install from source or contribute to the project:

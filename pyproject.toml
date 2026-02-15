@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.scripts]
-sekoia-event-export = "sekoia_event_exporter:main"
+sekoia-event-exporter = "sekoia_event_exporter:main"
 see = "sekoia_event_exporter:main"
 
 [project.urls]
