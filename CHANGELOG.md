@@ -11,9 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 ### Changed
-- Replaced Black with Ruff for code formatting (Ruff now handles both linting and formatting)
-- Updated Ruff target version to Python 3.10 (matching project minimum version)
-- Added `sekoia-event-exporter` script entry point (in addition to `sekoia-event-export`) for uvx compatibility
+- Nothing yet
 
 ### Deprecated
 - Nothing yet
@@ -26,6 +24,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - Nothing yet
+
+## [0.5.1] - 2026-02-15
+
+### Added
+- `sekoia-event-exporter` script entry point for uvx compatibility
+- Documentation for running with uvx (no installation required)
+- Ruff formatting check in CI workflow
+
+### Changed
+- Replaced Black with Ruff for code formatting (Ruff now handles both linting and formatting)
+- Updated Ruff target version to Python 3.10 (matching project minimum version)
+- CI workflow now uses `ruff format --check` instead of `black --check`
+- Publish workflow now uses `ruff format --check` instead of `black --check`
+
+### Removed
+- Black dependency (now using Ruff for both linting and formatting)
+- Black check from CI and publish workflows
 
 ## [0.5.0] - 2026-02-15
 
@@ -155,7 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.2.0...v0.3.0

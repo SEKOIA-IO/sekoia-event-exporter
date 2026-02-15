@@ -64,9 +64,9 @@ jobs:
       run: |
         uv sync --all-extras
 
-    - name: Check formatting with black
+    - name: Check formatting with ruff
       run: |
-        uv run black --check src/ tests/
+        uv run ruff format --check src/ tests/
 
     - name: Lint with ruff
       run: |
