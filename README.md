@@ -471,20 +471,15 @@ With coverage:
 uv run pytest --cov=sekoia_event_exporter --cov-report=html
 ```
 
-### Code Formatting
+### Code Quality
 
 ```bash
-# Format code with black
-uv run black src/ tests/
-
-# Check formatting without changes
-uv run black --check src/ tests/
-
-# Lint with ruff
+# Lint and format with ruff
 uv run ruff check src/ tests/
 
-# Fix auto-fixable issues
+# Auto-fix issues (including formatting)
 uv run ruff check --fix src/ tests/
+uv run ruff format src/ tests/
 
 # Type check with mypy
 uv run mypy src/
@@ -494,7 +489,6 @@ uv run mypy src/
 
 ```bash
 # Run all checks at once
-uv run black --check src/ tests/ && \
 uv run ruff check src/ tests/ && \
 uv run mypy src/ && \
 uv run pytest

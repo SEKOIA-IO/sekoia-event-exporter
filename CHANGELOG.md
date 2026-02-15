@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 ### Changed
-- Nothing yet
+- Replaced Black with Ruff for code formatting (Ruff now handles both linting and formatting)
+- Updated Ruff target version to Python 3.10 (matching project minimum version)
 
 ### Deprecated
 - Nothing yet
