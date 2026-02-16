@@ -28,7 +28,7 @@ from . import __version__
 DEFAULT_API_HOST = "api.sekoia.io"
 DEFAULT_INTERVAL_S = 2
 DEFAULT_TIMEOUT = (5, 30)  # (connect, read)
-DEFAULT_EXPORT_FIELDS = ["message", "timestamp"]  # Default fields to export
+DEFAULT_EXPORT_FIELDS = ["message", "@timestamp"]  # Default fields to export
 
 
 class ConfigError(RuntimeError):
@@ -178,13 +178,13 @@ def get_export_fields(fields_arg: str | None = None) -> list[str]:
     Priority:
         1. Command-line argument (--fields)
         2. Environment variable (EXPORT_FIELDS)
-        3. Default fields (message, timestamp)
+        3. Default fields (message, @timestamp)
 
     Example:
-        >>> get_export_fields("message,timestamp,source.ip")
-        ['message', 'timestamp', 'source.ip']
+        >>> get_export_fields("message,@timestamp,source.ip")
+        ['message', '@timestamp', 'source.ip']
         >>> get_export_fields()  # Uses defaults
-        ['message', 'timestamp']
+        ['message', '@timestamp']
     """
     # Check command-line argument first
     if fields_arg:
@@ -781,7 +781,7 @@ def main() -> None:
         "--fields",
         type=str,
         default=None,
-        help="Comma-separated list of fields to export (default: message,timestamp, overrides EXPORT_FIELDS env var)",
+        help="Comma-separated list of fields to export (default: message,@timestamp, overrides EXPORT_FIELDS env var)",
     )
 
     # S3 Configuration
