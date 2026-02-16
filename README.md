@@ -119,8 +119,8 @@ API_HOST=api.usa1.sekoia.io
 **Option 2: Command-Line Argument**
 
 ```bash
-sekoia-event-export export <job_uuid> --api-host api.usa1.sekoia.io
-sekoia-event-export status <task_uuid> --api-host api.usa1.sekoia.io
+sekoia-event-exporter export <job_uuid> --api-host api.usa1.sekoia.io
+sekoia-event-exporter status <task_uuid> --api-host api.usa1.sekoia.io
 ```
 
 **Option 3: Default**
@@ -147,7 +147,7 @@ By default, the tool generates a random 256-bit encryption key for each export:
 
 ```bash
 # Encryption is automatic - the tool will display the generated key
-sekoia-event-export export <job_uuid>
+sekoia-event-exporter export <job_uuid>
 ```
 
 Output:
@@ -173,10 +173,10 @@ export S3_SSE_C_KEY=$(openssl rand -base64 32)
 echo "Your encryption key (save this securely): $S3_SSE_C_KEY"
 
 # Use it for export
-sekoia-event-export export <job_uuid>
+sekoia-event-exporter export <job_uuid>
 
 # Or provide it directly
-sekoia-event-export export <job_uuid> --s3-sse-c-key "<your-base64-encoded-key>"
+sekoia-event-exporter export <job_uuid> --s3-sse-c-key "<your-base64-encoded-key>"
 ```
 
 **Disabling Encryption**
@@ -184,7 +184,7 @@ sekoia-event-export export <job_uuid> --s3-sse-c-key "<your-base64-encoded-key>"
 To disable SSE-C encryption (not recommended):
 
 ```bash
-sekoia-event-export export <job_uuid> --no-sse-c
+sekoia-event-exporter export <job_uuid> --no-sse-c
 ```
 
 **Full S3 Configuration**
@@ -201,13 +201,13 @@ export S3_ENDPOINT_URL="https://s3.amazonaws.com"
 export S3_REGION_NAME="us-east-1"
 export S3_SSE_C_KEY="<base64-key>"
 
-sekoia-event-export export <job_uuid>
+sekoia-event-exporter export <job_uuid>
 ```
 
 Or using command-line arguments:
 
 ```bash
-sekoia-event-export export <job_uuid> \
+sekoia-event-exporter export <job_uuid> \
   --s3-bucket my-export-bucket \
   --s3-prefix exports/ \
   --s3-access-key <access-key> \
@@ -265,13 +265,13 @@ dGhpc2lzYW5leGFtcGxla2V5Zm9ydGVzdGluZzEyMzQ1Njc4
 Trigger an export for a specific search job, monitor its progress, and automatically download the file:
 
 ```bash
-sekoia-event-export export <job_uuid>
+sekoia-event-exporter export <job_uuid>
 ```
 
 Example:
 
 ```bash
-sekoia-event-export export 550e8400-e29b-41d4-a716-446655440000
+sekoia-event-exporter export 550e8400-e29b-41d4-a716-446655440000
 ```
 
 **The export will be automatically downloaded when ready.** The file is saved as `export_YYYYMMDD_HHMMSS.json.gz` by default.
@@ -282,31 +282,31 @@ By default, only `message` and `timestamp` fields are exported to avoid exportin
 
 ```bash
 # Export specific fields
-sekoia-event-export export <job_uuid> --fields "message,timestamp,source.ip,destination.ip"
+sekoia-event-exporter export <job_uuid> --fields "message,timestamp,source.ip,destination.ip"
 
 # Or using environment variable
 export EXPORT_FIELDS="message,timestamp,source.ip,user.name"
-sekoia-event-export export <job_uuid>
+sekoia-event-exporter export <job_uuid>
 ```
 
 **Custom output filename:**
 
 ```bash
-sekoia-event-export export <job_uuid> --output my-export.json.gz
+sekoia-event-exporter export <job_uuid> --output my-export.json.gz
 # or using short form
-sekoia-event-export export <job_uuid> -o my-export.json.gz
+sekoia-event-exporter export <job_uuid> -o my-export.json.gz
 ```
 
 **Disable auto-download (just get the URL):**
 
 ```bash
-sekoia-event-export export <job_uuid> --no-download
+sekoia-event-exporter export <job_uuid> --no-download
 ```
 
 **With custom polling interval and timeout:**
 
 ```bash
-sekoia-event-export export <job_uuid> --interval 5 --max-wait 3600
+sekoia-event-exporter export <job_uuid> --interval 5 --max-wait 3600
 ```
 
 ### Check Export Status
@@ -314,13 +314,13 @@ sekoia-event-export export <job_uuid> --interval 5 --max-wait 3600
 Check the current status of an export task:
 
 ```bash
-sekoia-event-export status <task_uuid>
+sekoia-event-exporter status <task_uuid>
 ```
 
 Example:
 
 ```bash
-sekoia-event-export status 660e8400-e29b-41d4-a716-446655440001
+sekoia-event-exporter status 660e8400-e29b-41d4-a716-446655440001
 ```
 
 The status command shows:
@@ -335,35 +335,35 @@ The status command shows:
 Download a completed export:
 
 ```bash
-sekoia-event-export download <task_uuid>
+sekoia-event-exporter download <task_uuid>
 ```
 
 Example:
 
 ```bash
-sekoia-event-export download 660e8400-e29b-41d4-a716-446655440001
+sekoia-event-exporter download 660e8400-e29b-41d4-a716-446655440001
 ```
 
 **Important:** If the export was encrypted (default behavior), you must provide the same encryption key used during export:
 
 ```bash
 # Provide the key that was displayed when you created the export
-sekoia-event-export download <task_uuid> --s3-sse-c-key "<base64-key>"
+sekoia-event-exporter download <task_uuid> --s3-sse-c-key "<base64-key>"
 ```
 
 Or set it as an environment variable:
 
 ```bash
 export S3_SSE_C_KEY="<base64-key-from-export>"
-sekoia-event-export download <task_uuid>
+sekoia-event-exporter download <task_uuid>
 ```
 
 **Custom output filename:**
 
 ```bash
-sekoia-event-export download <task_uuid> --output my-export.json.gz
+sekoia-event-exporter download <task_uuid> --output my-export.json.gz
 # or using short form
-sekoia-event-export download <task_uuid> -o my-export.json.gz
+sekoia-event-exporter download <task_uuid> -o my-export.json.gz
 ```
 
 ### Command Options

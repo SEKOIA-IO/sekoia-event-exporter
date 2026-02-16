@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 ### Fixed
-- Nothing yet
+- Fix the binary name from sekoia-event-export to sekoia-event-exporter in Readme
 
 ### Security
 - Nothing yet
