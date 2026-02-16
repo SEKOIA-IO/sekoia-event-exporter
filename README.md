@@ -278,14 +278,14 @@ sekoia-event-exporter export 550e8400-e29b-41d4-a716-446655440000
 
 **Specify fields to export:**
 
-By default, only `message` and `timestamp` fields are exported to avoid exporting unnecessary data. You can specify additional fields:
+By default, only `message` and `@timestamp` fields are exported to avoid exporting unnecessary data. You can specify additional fields:
 
 ```bash
 # Export specific fields
-sekoia-event-exporter export <job_uuid> --fields "message,timestamp,source.ip,destination.ip"
+sekoia-event-exporter export <job_uuid> --fields "message,@timestamp,source.ip,destination.ip"
 
 # Or using environment variable
-export EXPORT_FIELDS="message,timestamp,source.ip,user.name"
+export EXPORT_FIELDS="message,@timestamp,source.ip,user.name"
 sekoia-event-exporter export <job_uuid>
 ```
 
@@ -377,7 +377,7 @@ sekoia-event-exporter download <task_uuid> -o my-export.json.gz
 - `--max-wait`: Maximum wait time in seconds (default: no limit)
 - `--no-download`: Don't download the file, just print the URL
 - `--output`, `-o`: Output filename for the downloaded file (default: export_YYYYMMDD_HHMMSS.json.gz)
-- `--fields`: Comma-separated list of fields to export (default: message,timestamp, overrides EXPORT_FIELDS env var)
+- `--fields`: Comma-separated list of fields to export (default: message,@timestamp, overrides EXPORT_FIELDS env var)
 
 **S3 Configuration:**
 - `--s3-bucket`: S3 bucket name (overrides S3_BUCKET env var)

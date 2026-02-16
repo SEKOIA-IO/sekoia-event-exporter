@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix the binary name from sekoia-event-export to sekoia-event-exporter in Readme
+- Fix the timestamp default field name
 
 ### Security
 - Nothing yet
