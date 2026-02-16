@@ -20,11 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 ### Fixed
-- Fix the binary name from sekoia-event-export to sekoia-event-exporter in Readme
-- Fix the timestamp default field name
+- Nothing yet
 
 ### Security
 - Nothing yet
+
+## [0.5.3] - 2026-02-16
+
+### Fixed
+- Fix the binary name from sekoia-event-export to sekoia-event-exporter in Readme
+- Fix the timestamp default field name from `timestamp` to `@timestamp`
 
 ## [0.5.2] - 2026-02-15
 
@@ -176,7 +181,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API key authentication via `API_KEY` environment variable
 - No credentials stored in code or configuration files
 
-[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/sekoia-io/sekoia-event-exporter/compare/v0.4.0...v0.5.0
