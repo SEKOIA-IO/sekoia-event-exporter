@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: {}
+
 jobs:
   test:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
@@ -44,6 +48,8 @@ jobs:
         fail_ci_if_error: false
 
   code-quality:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
     name: Code Quality
     runs-on: ubuntu-latest
 
