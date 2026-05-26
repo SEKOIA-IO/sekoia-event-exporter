@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.5.4] - 2026-05-26
+
+### Fixed
+- Retry when retrieving the task fails with a 503 or a 504 error
+
 ## [0.5.3] - 2026-02-16
 
 ### Fixed

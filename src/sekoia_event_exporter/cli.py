@@ -22,6 +22,7 @@ import time
 from datetime import datetime, timedelta
 
 import requests
+from tenacity import RetryCallState, retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from . import __version__
 
@@ -467,6 +468,33 @@ def download_file(
         raise RuntimeError(f"Failed to download file: {e}") from e
 
 
+def _is_retryable_http_error(exc: BaseException) -> bool:
+    return isinstance(exc, requests.HTTPError) and exc.response is not None and exc.response.status_code in (503, 504)
+
+
+def _before_retry(retry_state: RetryCallState):
+    print(f"\nFailed to fetch task status (attempt {retry_state.attempt_number}). Retrying...")
+
+
+@retry(
+    retry=retry_if_exception(_is_retryable_http_error),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(5),
+    reraise=True,
+    before_sleep=_before_retry,
+)
+def _fetch_task_request(
+    task_uuid: str,
+    session: requests.Session,
+    api_host: str,
+    timeout: tuple[int, int],
+) -> dict:
+    url = f"https://{api_host}/v1/tasks/{task_uuid}"
+    resp = session.get(url, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
+
+
 def fetch_task(task_uuid: str, session: requests.Session, api_host: str, timeout=DEFAULT_TIMEOUT) -> dict:
     """Fetch the current status of an export task.
 
@@ -482,11 +510,10 @@ def fetch_task(task_uuid: str, session: requests.Session, api_host: str, timeout
     Raises:
         RuntimeError: If fetching the task status fails.
     """
-    url = f"https://{api_host}/v1/tasks/{task_uuid}"
-    resp = session.get(url, timeout=timeout)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Failed to get export status: {resp.status_code} {resp.text}")
-    return resp.json()
+    try:
+        return _fetch_task_request(task_uuid, session, api_host, timeout)
+    except requests.HTTPError as e:
+        raise RuntimeError(f"Failed to get export status: {e.response.status_code} {e.response.text}") from e
 
 
 def poll_status(
