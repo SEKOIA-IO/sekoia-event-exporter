@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.5.5] - 2026-06-25
+
+### Changed
+- Smoother remaining time computation by using an Exponentially Weighted Moving Average (EWMA) for rate estimation
+
 ## [0.5.4] - 2026-05-26
 
 ### Fixed

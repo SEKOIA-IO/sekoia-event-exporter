@@ -545,6 +545,10 @@ def poll_status(
     # Track progress between polls to calculate accurate rate
     last_progress_count = None
     last_poll_time = None
+    # Exponentially Weighted Moving Average (EWMA) smoothing for rate: alpha=0.2 gives ~5-sample effective window,
+    # keeping estimates stable while still adapting to recent changes.
+    EWMA_ALPHA = 0.2
+    rate_ewma: float | None = None  # smoothed items-per-second
 
     while True:
         if deadline and datetime.now() >= deadline:
@@ -577,19 +581,23 @@ def poll_status(
         if total > 0:
             progress = 100 * progress_count / total
 
-            # Calculate remaining time based on observed progress rate between polls
+            # Calculate remaining time using an EWMA of the observed rate
             if last_progress_count is not None and last_poll_time is not None and progress_count > last_progress_count:
                 time_diff = (current_poll_time - last_poll_time).total_seconds()
                 progress_diff = progress_count - last_progress_count
 
                 if time_diff > 0 and progress_diff > 0:
-                    # Calculate items per second based on observed rate
-                    items_per_second = progress_diff / time_diff
-                    remaining_items = total - progress_count
-                    remaining_seconds = remaining_items / items_per_second
-                    eta_str = format_time_delta(remaining_seconds)
-                else:
-                    eta_str = "calculating..."
+                    current_rate = progress_diff / time_diff  # items/s this interval
+                    rate_ewma = (
+                        current_rate if rate_ewma is None else EWMA_ALPHA * current_rate + (1 - EWMA_ALPHA) * rate_ewma
+                    )
+
+            # Always derive ETA from the smoothed rate so a stalled poll doesn't
+            # reset the display to "calculating...".
+            remaining_items = total - progress_count
+            if rate_ewma and rate_ewma > 0:
+                remaining_seconds = remaining_items / rate_ewma
+                eta_str = format_time_delta(remaining_seconds)
             else:
                 eta_str = "calculating..."
 
