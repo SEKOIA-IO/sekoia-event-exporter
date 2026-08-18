@@ -31,6 +31,11 @@ DEFAULT_INTERVAL_S = 2
 DEFAULT_TIMEOUT = (5, 30)  # (connect, read)
 DEFAULT_EXPORT_FIELDS = ["message", "@timestamp"]  # Default fields to export
 
+# Error code returned when SSE-C encryption is not supported on the region's default bucket
+SSE_C_UNSUPPORTED_ERROR_CODE = "ES110"
+# Keys in an S3 config that carry SSE-C (customer-provided encryption) settings
+SSE_C_CONFIG_KEYS = ("sse_customer_key", "sse_customer_key_md5", "sse_customer_algorithm")
+
 
 class ConfigError(RuntimeError):
     """Configuration error exception."""
@@ -372,6 +377,24 @@ def trigger_export(
     # Send POST request with JSON body if we have config, otherwise empty body
     resp = session.post(url, json=body if body else None, timeout=timeout)
 
+    # If the server rejects the SSE-C key because it is unsupported on the region's
+    # default export bucket, warn the user and retry once without any SSE-C key.
+    if not resp.ok and s3_config is not None and _is_sse_c_unsupported_error(resp):
+        print(
+            f"{Colors.YELLOW}\u26a0  SSE-C encryption is not supported on this region's default export "
+            f"bucket. Retrying the export without the SSE-C encryption key.{Colors.RESET}",
+            file=sys.stderr,
+        )
+
+        # Strip SSE-C settings in place so the subsequent download does not attempt to decrypt.
+        for key in SSE_C_CONFIG_KEYS:
+            s3_config.pop(key, None)
+        body["s3"] = s3_config
+        if not s3_config:
+            del body["s3"]
+
+        resp = session.post(url, json=body if body else None, timeout=timeout)
+
     if resp.status_code not in (200, 201, 202):
         raise RuntimeError(f"Failed to trigger export: {resp.status_code} {resp.text}")
 
@@ -379,6 +402,14 @@ def trigger_export(
     if not task_uuid:
         raise RuntimeError("No task UUID returned from export trigger.")
     return task_uuid
+
+
+def _is_sse_c_unsupported_error(resp: requests.Response) -> bool:
+    """Return True if the response is the 'SSE-C unsupported' error (code ES110)."""
+    try:
+        return resp.json().get("code") == SSE_C_UNSUPPORTED_ERROR_CODE
+    except (ValueError, AttributeError):
+        return False
 
 
 def download_file(
