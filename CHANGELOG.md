@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Nothing yet
 
+## [0.6.0] - 2026-08-18
+
+### Added
+- Automatically fall back to an unencrypted export (with a warning) when the server
+  reports that SSE-C encryption is not supported on the region's default export
+  bucket.
+
 ## [0.5.5] - 2026-06-25
 
 ### Changed
